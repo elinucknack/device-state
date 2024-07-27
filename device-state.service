@@ -1,0 +1,30 @@
+[Unit]
+Description=Device state
+After=network.target
+
+[Service]
+Type=simple
+User=device-state
+ExecStart=/usr/bin/node /var/device-state/main.js
+Restart=on-failure
+
+Environment=APP_MQTT_PROTOCOL=mqtt
+Environment=APP_MQTT_HOST=mqtt.mysite.com
+Environment=APP_MQTT_PORT=1883
+Environment=APP_MQTT_USERNAME=mqttuser
+Environment=APP_MQTT_PASSWORD=bXF0dHBhc3N3b3Jk
+Environment=APP_MQTT_TOPIC=mysite/device
+Environment=APP_MAILER_ENABLED=true
+Environment=APP_MAILER_HOST=mailer.com
+Environment=APP_MAILER_PORT=465
+Environment=APP_MAILER_USE_SECURE_CONNECTION=true
+Environment=APP_MAILER_USERNAME=mailerusername
+Environment=APP_MAILER_PASSWORD=bWFpbGVycGFzc3dvcmQ=
+Environment=APP_MATRIX_ENABLED=true
+Environment=APP_MATRIX_BASE_URL=https://matrix.org
+Environment=APP_MATRIX_ACCESS_TOKEN=bWF0cml4YWNjZXNzdG9rZW4=
+Environment=APP_MATRIX_USER_ID=@matrixuserid:matrix.org
+Environment=APP_MATRIX_ROOM_ID=!matrixroomid:matrix.org
+
+[Install]
+WantedBy=multi-user.target
