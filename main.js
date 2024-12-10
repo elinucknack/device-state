@@ -316,8 +316,9 @@ const createMatrixDriver = () => {
         if (process.env.APP_MATRIX_ENABLED === 'true') {
             let options = {
                 baseUrl: process.env.APP_MATRIX_BASE_URL,
-                accessToken: Buffer.from(process.env.APP_MATRIX_ACCESS_TOKEN, 'base64').toString('utf8'),
-                userId: process.env.APP_MATRIX_USER_ID
+                userId: process.env.APP_MATRIX_USER_ID,
+                deviceId: process.env.APP_MATRIX_DEVICE_ID,
+                accessToken: Buffer.from(process.env.APP_MATRIX_ACCESS_TOKEN, 'base64').toString('utf8')
             };
             connection = createMatrixClient(options);
         } else {
@@ -329,9 +330,10 @@ const createMatrixDriver = () => {
         if (connection !== null) {
             connection.sendEvent(process.env.APP_MATRIX_ROOM_ID, 'm.room.message', {
                 body: text,
-                msgtype: 'm.text'
+                msgtype: 'm.notice'
             }, '', (err, res) => {
                 if (err) {
+                    logger.error(err);
                     setTimeout(() => {
                         send(text);
                     }, 15000);

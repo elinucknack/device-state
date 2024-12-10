@@ -22,8 +22,9 @@ Environment=APP_MAILER_USERNAME=mailerusername
 Environment=APP_MAILER_PASSWORD=bWFpbGVycGFzc3dvcmQ=
 Environment=APP_MATRIX_ENABLED=true
 Environment=APP_MATRIX_BASE_URL=https://matrix.org
-Environment=APP_MATRIX_ACCESS_TOKEN=bWF0cml4YWNjZXNzdG9rZW4=
 Environment=APP_MATRIX_USER_ID=@matrixuserid:matrix.org
+Environment=APP_MATRIX_DEVICE_ID=ABCDEFGHIJ
+Environment=APP_MATRIX_ACCESS_TOKEN=bWF0cml4YWNjZXNzdG9rZW4=
 Environment=APP_MATRIX_ROOM_ID=!matrixroomid:matrix.org
 
 [Install]
