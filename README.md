@@ -72,6 +72,29 @@ systemctl enable /var/device-state/device-state.service
 systemctl start device-state
 ```
 
+## Usage
+
+After the connection to the MQTT server, the device state is sent every 15 seconds using the `device-topic/state` topic.
+
+The device state contains the following data:
+- `architectureName`
+- `boardName`
+- `coreVersion`
+- `cpuCount`
+- `cpuLoad` (in %)
+- `temperature` (in &deg;C)
+- `throttled` (integer)
+- `freeHddSpace` (in %)
+- `freeDataSpace` (in %)
+- `freeMemory` (in %)
+- `totalHddSpace` (in bytes)
+- `totalDataSpace` (in bytes)
+- `totalMemory` (in bytes)
+- `platform`
+- `uptime` (using the format `(W'w')(D'd')HH:MI:SS`)
+- `version`
+- `timestamp` (Unix time in seconds)
+
 ## Authors
 
 - [**Eli Nucknack**](mailto:eli.nucknack@gmail.com)

@@ -18,7 +18,7 @@ Environment=APP_MAILER_ENABLED=true
 Environment=APP_MAILER_HOST=mailer.com
 Environment=APP_MAILER_PORT=465
 Environment=APP_MAILER_USE_SECURE_CONNECTION=true
-Environment=APP_MAILER_USERNAME=mailerusername
+Environment=APP_MAILER_USERNAME=mqttuser
 Environment=APP_MAILER_PASSWORD=bWFpbGVycGFzc3dvcmQ=
 Environment=APP_MATRIX_ENABLED=true
 Environment=APP_MATRIX_BASE_URL=https://matrix.org
