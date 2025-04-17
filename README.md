@@ -28,9 +28,9 @@ apt install nodejs
 ```
 adduser device-state
 ```
-4. Add user `device-state` to group `gpio`:
+4. Add user `device-state` to group `video`:
 ```
-usermod -a -G gpio device-state
+usermod -a -G video device-state
 ```
 
 ### Prepare the file system
