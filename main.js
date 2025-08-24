@@ -392,7 +392,7 @@ mqttDriver.onConnect(() => {
         } else if (connectionState === 'disconnected') {
             setConnectionState('reconnected');
         }
-        mqttDriver.publish(JSON.stringify(deviceStateDriver.getState(), null, '    '), 0, true);
+        mqttDriver.publish(JSON.stringify(deviceStateDriver.getState(), null, '    '), 2, true);
     }
 });
 
@@ -415,7 +415,7 @@ logger.debug('Creating MQTT listeners completed.');
 logger.debug('Creating device state repeater...');
 
 setInterval(() => {
-    mqttDriver.publish(JSON.stringify(deviceStateDriver.getState(), null, '    '), 0, true);
+    mqttDriver.publish(JSON.stringify(deviceStateDriver.getState(), null, '    '), 2, true);
 }, 15000);
 
 logger.debug('Creating device state repeater completed.');
