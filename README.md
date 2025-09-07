@@ -87,7 +87,7 @@ systemctl start device-state
 
 ## Usage
 
-After the connection to the MQTT server, the device state is sent every 15 seconds using the `device-topic/state` topic.
+After the connection to the MQTT server, the device state is sent every 15 seconds using the `device-topic/state` topic, the `retain` flag is set to `true` and the `QoS` flag is set to `2`.
 
 The device state contains the following data:
 - `architectureName`
