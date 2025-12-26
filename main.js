@@ -118,21 +118,7 @@ const getPlatform = () => {
 };
 
 const getUptime = () => {
-    let uptimeNumber = Math.floor(uptime());
-    let uptimeString = (uptimeNumber % 60).toString().padStart(2, '0');
-    uptimeNumber = Math.floor(uptimeNumber / 60)
-    uptimeString = (uptimeNumber % 60).toString().padStart(2, '0') + ':' + uptimeString;
-    uptimeNumber = Math.floor(uptimeNumber / 60)
-    uptimeString = (uptimeNumber % 24).toString().padStart(2, '0') + ':' + uptimeString;
-    uptimeNumber = Math.floor(uptimeNumber / 24)
-    if (uptimeNumber > 0) {
-        uptimeString = (uptimeNumber % 7).toString().toString() + 'd' + uptimeString;
-        uptimeNumber = Math.floor(uptimeNumber / 7)
-    }
-    if (uptimeNumber > 0) {
-        uptimeString = uptimeNumber.toString() + 'w' + uptimeString;
-    }
-    return uptimeString;
+    return Math.floor(uptime());
 };
 
 const getVersion = () => {
@@ -140,6 +126,10 @@ const getVersion = () => {
         return parseCsv(readFile('/etc/os-release', 'utf8'), { delimiter: '=' }).find(item => item[0] === 'VERSION')[1];
     }
     return release();
+};
+
+const getTimestamp = () => {
+    return Math.floor(Date.now() / 1000);
 };
 
 const createDeviceStateDriver = () => {
@@ -162,7 +152,7 @@ const createDeviceStateDriver = () => {
                 platform: getPlatform(),
                 uptime: getUptime(),
                 version: getVersion(),
-                timestamp: Date.now()
+                timestamp: getTimestamp()
             };
         }
     };
