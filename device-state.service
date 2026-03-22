@@ -13,7 +13,7 @@ Environment=APP_MQTT_HOST=mqtt.mysite.com
 Environment=APP_MQTT_PORT=1883
 Environment=APP_MQTT_USERNAME=mqttuser
 Environment=APP_MQTT_PASSWORD=bXF0dHBhc3N3b3Jk
-Environment=APP_MQTT_TOPIC=mysite/device
+Environment=APP_MQTT_TOPIC=mysite/raspberry-pi
 Environment=APP_MAILER_ENABLED=true
 Environment=APP_MAILER_HOST=mailer.com
 Environment=APP_MAILER_PORT=465
