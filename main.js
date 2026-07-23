@@ -67,46 +67,77 @@ const getCpuLoad = () => {
 };
 
 const getTemperature = () => {
-    if (getBoardName().startsWith('Raspberry Pi')) {
-        return Number(exec('vcgencmd measure_temp').stdout.split(/[=']/)[1].trim());
+    if (getBoardName() && getBoardName().startsWith('Raspberry Pi')) {
+        return Number(Number(exec('vcgencmd measure_temp').stdout.split(/[=']/)[1].trim()).toFixed(2));
     }
     return null;
 };
 
 const getThrottled = () => {
-    if (getBoardName().startsWith('Raspberry Pi')) {
-        return Number(exec('vcgencmd get_throttled').stdout.split(/=/)[1].trim());
+    if (getBoardName() && getBoardName().startsWith('Raspberry Pi')) {
+        const throttled = Number(exec('vcgencmd get_throttled').stdout.split(/=/)[1].trim());
+        return {
+            underVoltageActive: (throttled & 0x1) !== 0,
+            armFrequencyCappingActive: (throttled & 0x2) !== 0,
+            throttlingActive: (throttled & 0x4) !== 0,
+            softTemperatureLimitActive: (throttled & 0x8) !== 0,
+            underVoltageHasOccurred: (throttled & 0x10000) !== 0,
+            armFrequencyCappingHasOccurred: (throttled & 0x20000) !== 0,
+            throttlingHasOccurred: (throttled & 0x40000) !== 0,
+            softTemperatureLimitHasOccurred: (throttled & 0x80000) !== 0
+        };
     }
     return null;
 };
 
-const getFreeHddSpace = () => {
+const getFreeOsDisk = () => {
     return checkDiskUsage('/').available;
 };
 
-const getFreeDataSpace = () => {
-    if (fileExists('/mnt/data')) {
-        return checkDiskUsage('/mnt/data').available;
+const getUsedOsDisk = () => {
+    const total = getTotalOsDisk();
+    const free = getFreeOsDisk();
+    return Number((100 * (total - free) / total).toFixed(2));
+};
+
+const getFreeDataDisk = () => {
+    if (fileExists('/mnt/ext')) {
+        return checkDiskUsage('/mnt/ext').available;
     }
     return null;
 };
 
-const getFreeMemory = () => {
+const getUsedDataDisk = () => {
+    const total = getTotalDataDisk();
+    const free = getFreeDataDisk();
+    if (total !== null && free !== null) {
+        return Number((100 * (total - free) / total).toFixed(2));
+    }
+    return null;
+};
+
+const getFreeRam = () => {
     return freemem();
 };
 
-const getTotalHddSpace = () => {
+const getUsedRam = () => {
+    const total = getTotalRam();
+    const free = getFreeRam();
+    return Number((100 * (total - free) / total).toFixed(2));
+};
+
+const getTotalOsDisk = () => {
     return checkDiskUsage('/').total;
 };
 
-const getTotalDataSpace = () => {
-    if (fileExists('/mnt/data')) {
-        return checkDiskUsage('/mnt/data').total;
+const getTotalDataDisk = () => {
+    if (fileExists('/mnt/ext')) {
+        return checkDiskUsage('/mnt/ext').total;
     }
     return null;
 };
 
-const getTotalMemory = () => {
+const getTotalRam = () => {
     return totalmem();
 };
 
@@ -129,31 +160,62 @@ const getVersion = () => {
 };
 
 const getTimestamp = () => {
-    return Math.floor(Date.now() / 1000);
+    return Math.floor(Date.now() / 60000) * 60;
 };
 
 const createDeviceStateDriver = () => {
     return {
         getState: () => {
-            return {
+            let state = {
+                platform: getPlatform(),
                 architectureName: getArchitectureName(),
-                boardName: getBoardName(),
+                version: getVersion(),
                 cpuCount: getCpuCount(),
                 cpuFrequency: getCpuFrequency(),
                 cpuLoad: getCpuLoad(),
-                temperature: getTemperature(),
-                throttled: getThrottled(),
-                freeHddSpace: getFreeHddSpace(),
-                freeDataSpace: getFreeDataSpace(),
-                freeMemory: getFreeMemory(),
-                totalHddSpace: getTotalHddSpace(),
-                totalDataSpace: getTotalDataSpace(),
-                totalMemory: getTotalMemory(),
-                platform: getPlatform(),
+                totalOsDisk: getTotalOsDisk(),
+                usedOsDisk: getUsedOsDisk(),
+                totalRam: getTotalRam(),
+                usedRam: getUsedRam(),
                 uptime: getUptime(),
-                version: getVersion(),
                 timestamp: getTimestamp()
             };
+            const boardName = getBoardName();
+            if (boardName !== null) {
+                state = {
+                    ...state,
+                    boardName
+                };
+            }
+            const totalDataDisk = getTotalDataDisk();
+            if (totalDataDisk !== null) {
+                state = {
+                    ...state,
+                    totalDataDisk
+                };
+            }
+            const usedDataDisk = getUsedDataDisk();
+            if (usedDataDisk !== null) {
+                state = {
+                    ...state,
+                    usedDataDisk
+                };
+            }
+            const temperature = getTemperature();
+            if (temperature !== null) {
+                state = {
+                    ...state,
+                    temperature
+                };
+            }
+            const throttled = getThrottled();
+            if (throttled !== null) {
+                state = {
+                    ...state,
+                    ...throttled
+                };
+            }
+            return state;
         }
     };
 };
@@ -184,15 +246,20 @@ const createMqttDriver = () => {
         connection = connectMqtt(options);
     };
     
-    const publish = (message, qos, retain) => {
+    const publish = (topic, message, qos, retain, onSuccess, onError) => {
         if (connection !== null) {
             connection.publish(
-                `${process.env.APP_MQTT_TOPIC}/${hostname()}/state`,
+                `${process.env.APP_MQTT_TOPIC}/${hostname()}/${topic}`,
                 message || '{}',
                 { qos: qos || 0, retain: retain || false },
                 e => {
                     if (e) {
+                        if (onError) {
+                            onError();
+                        }
                         logger.error(e);
+                    } else if (onSuccess) {
+                        onSuccess();
                     }
                 }
             );
@@ -221,7 +288,7 @@ const createMqttDriver = () => {
     
     return {
         connect: () => connect(),
-        publish: (message, qos, retain) => publish(message, qos, retain),
+        publish: (topic, message, qos, retain) => publish(topic, message, qos, retain),
         onConnect: callback => onConnect(callback),
         onClose: callback => onClose(callback),
         onError: callback => onError(callback)
@@ -362,42 +429,32 @@ logger.debug('Creating device state driver completed.');
 
 logger.debug('Creating MQTT listeners...');
 
-let connectionEvent = null;
-let connectionState = 'unknown';
-let connectionStateTimeoutId = null;
+let lastSentTimestamp = null;
 
-const setConnectionState = newConnectionState => {
-    connectionState = newConnectionState;
-    logger.info(`MQTT client ${newConnectionState}.`);
-    mailer.send(`Device ${hostname()} notification`, `MQTT broker ${newConnectionState}.`);
-    matrixDriver.send(`MQTT broker ${newConnectionState}.`);
+function capitalizeFirstLetter(value) {
+  if (!value) return '';
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+const sendNotification = (subject, body) => {
+    logger.info(body);
+    mailer.send(subject, body);
+    matrixDriver.send(body);
 };
 
 mqttDriver.onConnect(() => {
-    if (connectionEvent !== 'connect') {
-        connectionEvent = 'connect';
-        clearTimeout(connectionStateTimeoutId);
-        if (['unknown', 'unconnected'].includes(connectionState)) {
-            setConnectionState('connected');
-        } else if (connectionState === 'disconnected') {
-            setConnectionState('reconnected');
-        }
-        mqttDriver.publish(JSON.stringify(deviceStateDriver.getState(), null, '    '), 2, true);
-    }
+    const deviceName = capitalizeFirstLetter(hostname());
+    const subject = `${deviceName} notification.`;
+    const body = `${deviceName} connected to MQTT broker.`;
+    sendNotification(subject, body);
 });
 
 mqttDriver.onClose(() => {
-    if (connectionEvent !== 'close') {
-        connectionEvent = 'close';
-        clearTimeout(connectionStateTimeoutId);
-        connectionStateTimeoutId = setTimeout(() => {
-            if (connectionState === 'unknown') {
-                setConnectionState('unconnected');
-            } else if (['connected', 'reconnected'].includes(connectionState)) {
-                setConnectionState('disconnected');
-            }
-        }, 60000);
-    }
+    const deviceName = capitalizeFirstLetter(hostname());
+    const subject = `${deviceName} notification.`;
+    const body = `${deviceName} disconnected from MQTT broker.`;
+    sendNotification(subject, body);
+    lastSentTimestamp = null;
 });
 
 logger.debug('Creating MQTT listeners completed.');
@@ -405,7 +462,15 @@ logger.debug('Creating MQTT listeners completed.');
 logger.debug('Creating device state repeater...');
 
 setInterval(() => {
-    mqttDriver.publish(JSON.stringify(deviceStateDriver.getState(), null, '    '), 2, true);
+    let deviceState = deviceStateDriver.getState();
+    if (deviceState.timestamp !== lastSentTimestamp) {
+        mqttDriver.publish('state', JSON.stringify(deviceStateDriver.getState(), null, '    '), 1, true, () => {
+            lastSentTimestamp = deviceState.timestamp;
+        }, () => {
+            lastSentTimestamp = null;
+            logger.info('Sending device state failed');
+        });
+    }
 }, 15000);
 
 logger.debug('Creating device state repeater completed.');
