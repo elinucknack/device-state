@@ -173,10 +173,13 @@ const createDeviceStateDriver = () => {
                 cpuCount: getCpuCount(),
                 cpuFrequency: getCpuFrequency(),
                 cpuLoad: getCpuLoad(),
+                cpuLoadThreshold: Number(process.env.APP_THRESHOLD_CPU_LOAD),
                 totalOsDisk: getTotalOsDisk(),
                 usedOsDisk: getUsedOsDisk(),
+                usedOsDiskThreshold: Number(process.env.APP_THRESHOLD_USED_OS_DISK),
                 totalRam: getTotalRam(),
                 usedRam: getUsedRam(),
+                usedRamThreshold: Number(process.env.APP_THRESHOLD_USED_RAM),
                 uptime: getUptime(),
                 timestamp: getTimestamp()
             };
@@ -198,14 +201,16 @@ const createDeviceStateDriver = () => {
             if (usedDataDisk !== null) {
                 state = {
                     ...state,
-                    usedDataDisk
+                    usedDataDisk,
+                    usedDataDiskThreshold: Number(process.env.APP_THRESHOLD_USED_DATA_DISK)
                 };
             }
             const temperature = getTemperature();
             if (temperature !== null) {
                 state = {
                     ...state,
-                    temperature
+                    temperature,
+                    temperatureThreshold: Number(process.env.APP_THRESHOLD_TEMPERATURE)
                 };
             }
             const throttled = getThrottled();
